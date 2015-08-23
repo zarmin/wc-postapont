@@ -39,6 +39,7 @@ class WC_PostaPont {
 
     //Add html for the map selector
     add_action('woocommerce_review_order_before_payment', array( $this, 'wc_postapont_map_html') );
+    add_action('woocommerce_update_order_review_fragments', array( $this, 'wc_postapont_map_html_ajax' ) );
 
     //Validate PostaPont selection
     add_action('woocommerce_checkout_process', array( $this, 'wc_postapont_map_validation') );
@@ -148,17 +149,35 @@ class WC_PostaPont {
     return $updated_settings;
   }
 
-  //Display extra HTML on checkout
   public function wc_postapont_map_html() {
+    echo '<div id="postapont-container"></div>';
+    return;
+  }
+
+  public function wc_postapont_map_html_ajax( $fragment ) {
     $chosen_methods = WC()->session->get( 'chosen_shipping_methods' );
-    $chosen_shipping = $chosen_methods[0]; 
-    if(get_option('wc_postapont_shipping_method') == $chosen_methods[0]):
+    $chosen_shipping = $chosen_methods[0];
+
+    $pp_fragment = '<div id="postapont-container">';
+
+    if(get_option('wc_postapont_shipping_method') == $chosen_methods[0]) {
+      $pp_fragment .= '';
+      ob_start();
       ?>
         <div id="postapontvalasztoapi"></div>
         <input type="hidden" name="wc_selected_postapont" id="wc_selected_postapont" />
         <div id="valasztott_postapont"><strong><?php _e('A kiválasztott Posta Pont átvevőhely:','wc_postapont'); ?></strong><p><?php _e('Kérjük, válasszon <strong>átvevőhelyet</strong> a legördülő listából, vagy a térképen egy PostaPontra kattintva!','wc_postapont'); ?></p></div>
         <?php
-        endif;
+        $pp_fragment .= ob_get_contents();
+      ob_end_clean();
+    } else {
+      $pp_fragment .= '';
+    }
+
+    $pp_fragment .= '</div>';
+    $fragment['#postapont-container'] = $pp_fragment;
+
+    return $fragment;
   }
 
   //Checkout Validation
